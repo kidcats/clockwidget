@@ -1,7 +1,7 @@
 // main.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
+import 'package:flutter/rendering.dart';
 import 'calculator_provider.dart';
 import 'home_page.dart';
 
@@ -12,6 +12,7 @@ void main() {
       child: const MyApp(),
     ),
   );
+  // debugPaintSizeEnabled = true;  // 开启布局边界显示
 }
 
 class MyApp extends StatelessWidget {

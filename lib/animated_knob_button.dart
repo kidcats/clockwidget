@@ -3,9 +3,18 @@ import 'package:flutter/material.dart';
 
 class AmmeterWidget extends StatefulWidget {
   final List<double> scaleValues;
+  final double pointerLength;
+  final double centerPointSize;
+  final Color pointerColor;
   final ValueChanged<double>? onValueChanged;
 
-  AmmeterWidget({required this.scaleValues, this.onValueChanged});
+  AmmeterWidget({
+    required this.scaleValues,
+    this.pointerLength = 200.0,
+    this.centerPointSize = 20.0,
+    this.pointerColor = Colors.red,
+    this.onValueChanged,
+  });
 
   @override
   _AmmeterWidgetState createState() => _AmmeterWidgetState();
@@ -38,104 +47,137 @@ class _AmmeterWidgetState extends State<AmmeterWidget>
     super.dispose();
   }
 
-  void _updateValue(double angle) {
-    double normalizedAngle = (angle % (2 * pi) + 2 * pi) % (2 * pi);
-    double value = (normalizedAngle / (2 * pi)) *
-            (widget.scaleValues.last - widget.scaleValues.first) +
-        widget.scaleValues.first;
-    value = value.clamp(widget.scaleValues.first, widget.scaleValues.last);
-    setState(() {
-      _currentValue = value;
-      _currentAngle = normalizedAngle;
-    });
-    _animationController.forward(from: 0.0);
-    widget.onValueChanged?.call(_currentValue);
-  }
-
   void _handlePanStart(DragStartDetails details) {
     _startAngle = _currentAngle;
   }
 
-  void _handlePanUpdate(DragUpdateDetails details) {
-    RenderBox renderBox = context.findRenderObject() as RenderBox;
-    Offset center = renderBox.size.center(Offset.zero);
-    Offset localPosition = renderBox.globalToLocal(details.globalPosition);
-    double touchAngle = (localPosition - center).direction;
-    double angleDiff = touchAngle - _startAngle;
-    _updateValue(_currentAngle + angleDiff);
+  double _calculateValueFromAngle(
+      double angle, double maxAngle, double minAngle) {
+    // 将角度从弧度转换为度
+    double angleInDegrees = angle * 180 / pi;
+
+    // 确定角度和数值之间的比例
+    // 这里假设电表的角度范围是 -150 到 150 度，对应的数值范围是 0 到 100
+    double minValue = 0.0;
+    double maxValue = 100.0;
+
+    // 计算当前角度对应的数值
+    // 先将角度限制在有效范围内
+    double clampedAngle = max(minAngle, min(maxAngle, angleInDegrees));
+    // 计算数值
+    double value = ((clampedAngle - minAngle) / (maxAngle - minAngle)) *
+            (maxValue - minValue) +
+        minValue;
+
+    return value;
   }
 
-  @override
+  void _handlePanUpdate(DragUpdateDetails details) {
+    final RenderBox renderBox = context.findRenderObject() as RenderBox;
+    final offset = renderBox.globalToLocal(details.globalPosition);
+    final center = renderBox.size.center(Offset.zero);
+
+    double touchAngle = atan2(offset.dy - center.dy, offset.dx - center.dx);
+    _currentAngle = touchAngle - _startAngle;
+    // 限制角度范围
+    _currentAngle = max(pi / 180 * -150, min(pi / 180 * 150, _currentAngle));
+
+    // 更新动画
+    _animation = Tween(begin: _animation.value, end: _currentAngle)
+        .animate(_animationController)
+      ..addListener(() {
+        setState(() {});
+      });
+    _animationController.forward(from: 0.0);
+
+    // 更新数值并调用回调
+    final newValue =
+        _calculateValueFromAngle(_currentAngle, 1 / 6 * pi, -1 / 6 * pi);
+    if (_currentValue != newValue) {
+      widget.onValueChanged?.call(newValue);
+      _currentValue = newValue;
+    }
+  }
+
   Widget build(BuildContext context) {
     return GestureDetector(
       onPanStart: _handlePanStart,
       onPanUpdate: _handlePanUpdate,
-      child: Container(
-        width: 1500,
-        height: 800,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(150),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              spreadRadius: 2,
-              blurRadius: 5,
-              offset: Offset(0, 3),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // 使用constraints计算尺寸
+          Size size = Size(constraints.maxWidth, constraints.maxHeight);
+          print(size);
+          return Container(
+            width: size.width,
+            height: size.height,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(size.height / 2),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  spreadRadius: 2,
+                  blurRadius: 5,
+                  offset: Offset(0, 3),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            _buildAmmeterBackground(),
-            _buildScale(),
-            _buildPointer(),
-            _buildCenterPoint(),
-          ],
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                _buildAmmeterBackground(size),
+                _buildScale(size),
+                _buildPointer(size),
+                _buildCenterPoint(size),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildAmmeterBackground(Size size) {
+    return CustomPaint(
+      painter: _AmmeterBackgroundPainter(size),
+    );
+  }
+
+  Widget _buildScale(Size size) {
+    return Container(
+      width: size.width,
+      height: size.height,
+      child: CustomPaint(
+        painter: _ScalePainter(
+          scaleValues: widget.scaleValues,
+          minAngle: -1 / 4 * pi,
+          maxAngle: 1 / 4 * pi,
         ),
       ),
     );
   }
 
-  Widget _buildAmmeterBackground() {
-    return CustomPaint(
-      painter: _AmmeterBackgroundPainter(),
-    );
-  }
-
-  Widget _buildScale() {
-    return CustomPaint(
-      painter: _ScalePainter(
-        scaleValues: widget.scaleValues,
-        minAngle: -0.4 * pi,
-        maxAngle: 0.4 * pi,
-      ),
-    );
-  }
-
-Widget _buildPointer() {
-  return AnimatedBuilder(
-    animation: _animation,
-    builder: (context, child) {
-      const pointerLength = 200.0; // 指针长度
-      const translateY = -pointerLength / 2; // 向上偏移半个指针长度
-
-      return Transform.translate(
-        offset: const Offset(0, translateY),
-        child: Transform.rotate(
-          angle: _currentAngle - (0.4 * pi),
-          alignment: Alignment.bottomCenter, // 设置旋转中心为底部中心
+  Widget _buildPointer(Size size) {
+    final pointerLength = size.height * 0.6;
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        return Transform(
+          transform: Matrix4.identity()
+            ..translate(0.0, -size.height * 0.08)
+            ..rotateZ(_currentAngle - (1 / 4 * pi)),
+          alignment: Alignment.bottomCenter,
           child: Container(
             width: 8,
             height: pointerLength,
             decoration: BoxDecoration(
-              color: Colors.red,
+              color: widget.pointerColor,
               borderRadius: BorderRadius.circular(2),
               gradient: LinearGradient(
                 colors: [
-                  Colors.red[700]!,
-                  Colors.red[900]!,
+                  widget.pointerColor.withOpacity(0.7),
+                  widget.pointerColor.withOpacity(0.9),
                 ],
               ),
               boxShadow: [
@@ -147,32 +189,35 @@ Widget _buildPointer() {
               ],
             ),
           ),
-        ),
-      );
-    },
-  );
-}
+        );
+      },
+    );
+  }
 
-  // these code for center point black
-  Widget _buildCenterPoint() {
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        color: Colors.black,
-        shape: BoxShape.circle,
+  Widget _buildCenterPoint(Size size) {
+    final centerPointRadius = widget.centerPointSize;
+    return Transform(
+      transform: Matrix4.identity()..translate(0.0, size.height * 0.22),
+      child: Container(
+        width: centerPointRadius,
+        height: centerPointRadius,
+        decoration: BoxDecoration(
+          color: Colors.black,
+          shape: BoxShape.circle,
+        ),
       ),
     );
   }
 }
 
 class _AmmeterBackgroundPainter extends CustomPainter {
+  _AmmeterBackgroundPainter(Size size);
+
   @override
   void paint(Canvas canvas, Size size) {
     final centerX = size.width / 2;
     final centerY = size.width;
-    final radius =  size.width;
-
+    final radius = size.width;
     final paint = Paint()
       ..color = Colors.black
       ..style = PaintingStyle.stroke
@@ -197,92 +242,61 @@ class _ScalePainter extends CustomPainter {
   final List<double> scaleValues;
   final double minAngle;
   final double maxAngle;
+  final TextPainter textPainter;
 
-  _ScalePainter(
-      {required this.scaleValues,
-      required this.minAngle,
-      required this.maxAngle});
+  _ScalePainter({
+    required this.scaleValues,
+    required this.minAngle,
+    required this.maxAngle,
+  }) : textPainter = TextPainter(
+          textDirection: TextDirection.ltr,
+          textAlign: TextAlign.center,
+        );
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Calculate the center coordinates of the widget
     final centerX = size.width / 2;
     final centerY = size.height / 2;
-
-    // Calculate the radius of the scale based on the widget size
-    final radius = min(centerX, centerY) - 40;
-
-    // Create a paint object for drawing the scale lines
-    final paint = Paint()
+    final radius = min(size.width, size.height)*0.9; // 圆弧的半径
+    // final radius = -300; // 圆弧的半径
+    final markPaint = Paint() // 长刻度的画笔
       ..color = Colors.black
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
 
-    // Create a paint object for drawing the scale marks
-    final markPaint = Paint()
-      ..color = Colors.black
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
+    final double angleRange = maxAngle - minAngle; // 度数范围
+    final int totalMarks = scaleValues.length; // 刻度范围
+    canvas.rotate(pi / 2); // 画布旋转现在X轴向下，Y轴向左边
+    canvas.translate(size.height, -centerX); // 画布平移 ，这个真的有用吗？打印的都是0，为什么
 
-    // Create a text painter for rendering the scale values
-    final textPainter = TextPainter(
-      textDirection: TextDirection.ltr,
-      textAlign: TextAlign.center,
-    );
-
-    // Calculate the range of angles for the scale
-    final double angleRange = maxAngle - minAngle;
-
-    // Get the total number of scale marks based on the scaleValues list
-    final int totalMarks = scaleValues.length;
-
-    // Rotate the canvas 90° clockwise
-    canvas.rotate(pi / 2);
-    canvas.translate(size.height, 0);
-
-    // Iterate through each scale mark
     for (int i = 0; i < totalMarks; i++) {
-      // Get the value for the current scale mark
       final value = scaleValues[i];
-
-      // Calculate the angle for the current scale mark
-      final angle = minAngle + (i / (totalMarks - 1)) * angleRange;
-
-      // Check if the current scale mark is a long mark (every 5th mark)
+      final angle = minAngle + (i / (totalMarks - 1)) * angleRange; // 总共有这么多大的刻度，直接平分
       const isLongMark = true;
-
-      // Set the length of the scale mark based on whether it's a long mark or not
-      const markLength = 16.0;
-
-      // Calculate the radius for the scale mark position
-      final markRadius = radius - markLength;
-
-      // Calculate the x and y coordinates for the scale mark position
-      final markX = centerY + markRadius * cos(angle);
-      final markY = centerX + markRadius * sin(angle);
-
-      // Save the current canvas state
+      const markLength = 16.0; // 长刻度的长度
+      final markRadius = radius - markLength / 2; //刻度的直径 ? 由于半径太长了，所以超出屏幕外面了
+      final markX = 0 - markRadius * cos(angle);
+      final markY = 0 -  markRadius * sin(angle);
+      print("---------");
+      print(markX);
+      print("----X----");
+      print(markY);
+      print("----Y----");
+      print("---------");
       canvas.save();
-
-      // Translate the canvas to the scale mark position
       canvas.translate(markX, markY);
-
-      // Rotate the canvas to align the scale mark with the angle
       canvas.rotate(angle - pi / 2);
-
-      // Draw the scale mark line
       canvas.drawLine(
         Offset(0, -markLength / 2),
         Offset(0, markLength / 2),
         markPaint,
       );
       canvas.restore();
-      // Draw auxiliary tick marks between major tick marks
-      // Add auxiliary marks between two main marks
+
       if (i < totalMarks - 1) {
         final nextValue = scaleValues[i + 1];
         final nextAngle = minAngle + ((i + 1) / (totalMarks - 1)) * angleRange;
-        final auxiliaryMarksCount = 10; // Adjust count as needed
+        final auxiliaryMarksCount = 10;
 
         for (int j = 1; j <= auxiliaryMarksCount; j++) {
           final fraction = j / (auxiliaryMarksCount + 1);
@@ -296,7 +310,7 @@ class _ScalePainter extends CustomPainter {
           canvas.rotate(auxiliaryAngle - pi / 2);
 
           canvas.drawLine(
-            Offset(0, -4.0), // Shorter mark
+            Offset(0, -4.0),
             Offset(0, 4.0),
             markPaint..strokeWidth = 0.5,
           );
@@ -305,11 +319,8 @@ class _ScalePainter extends CustomPainter {
         }
       }
 
-      // Correctly place this block inside the loop to handle all long marks
       canvas.save();
       canvas.translate(markX, markY);
-
-      // Rotate the canvas to align the scale mark with the angle
       canvas.rotate(angle - pi / 2);
       if (isLongMark) {
         textPainter.text = TextSpan(
@@ -325,14 +336,12 @@ class _ScalePainter extends CustomPainter {
           ),
         );
       }
-      // Restore the canvas state to its previous state
       canvas.restore();
     }
   }
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    // Repaint the scale whenever the scaleValues, minAngle, or maxAngle change
     return true;
   }
 }

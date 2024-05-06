@@ -41,7 +41,9 @@ class HomePage extends StatelessWidget {
                   child: AnimatedTextField(
                     labelText: 'Enter X Value',
                     onChanged: (value) {
-                      context.read<CalculatorProvider>().updateXValue(double.parse(value));
+                      context
+                          .read<CalculatorProvider>()
+                          .updateXValue(double.parse(value));
                     },
                   ),
                 ),
@@ -68,7 +70,9 @@ class HomePage extends StatelessWidget {
                     ],
                     onChanged: (value) {
                       if (value != null) {
-                        context.read<CalculatorProvider>().updateContactorAmperage(value);
+                        context
+                            .read<CalculatorProvider>()
+                            .updateContactorAmperage(value);
                       }
                     },
                   ),
@@ -85,15 +89,18 @@ class HomePage extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.all(24.0),
                   child: AnimatedTextDisplay(
-                    text: '${context.watch<CalculatorProvider>().minThermalRelayCurrentRange.toStringAsFixed(2)} - ${context.watch<CalculatorProvider>().maxThermalRelayCurrentRange.toStringAsFixed(2)} A',
+                    text:
+                        '${context.watch<CalculatorProvider>().minThermalRelayCurrentRange.toStringAsFixed(2)} - ${context.watch<CalculatorProvider>().maxThermalRelayCurrentRange.toStringAsFixed(2)} A',
                   ),
                 ),
               ),
             ),
-          SizedBox(height: 20),
-          Expanded(child: AmmeterWidget(
-            scaleValues:[0,20,40,60,100,120,140,160,180,200]
-          ))
+            SizedBox(height: 20),
+            Expanded(
+                child: AmmeterWidget(
+                    scaleValues: [0, 20, 40, 60, 100, 120, 140, 160, 180, 200]
+                    )
+            )
           ],
         ),
       ),
