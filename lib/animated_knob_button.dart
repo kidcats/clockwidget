@@ -302,8 +302,8 @@ class _ScalePainter extends CustomPainter {
           final fraction = j / (auxiliaryMarksCount + 1);
           final auxiliaryAngle = angle + fraction * (nextAngle - angle);
 
-          final auxiliaryMarkX = centerY + markRadius * cos(auxiliaryAngle);
-          final auxiliaryMarkY = centerX + markRadius * sin(auxiliaryAngle);
+          final auxiliaryMarkX = 0 - markRadius * cos(auxiliaryAngle);
+          final auxiliaryMarkY = 0 - markRadius * sin(auxiliaryAngle);
 
           canvas.save();
           canvas.translate(auxiliaryMarkX, auxiliaryMarkY);
