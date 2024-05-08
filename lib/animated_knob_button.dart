@@ -26,7 +26,7 @@ class _AmmeterWidgetState extends State<AmmeterWidget>
   late Animation<double> _animation;
   double _currentValue = 0.0;
   double _startAngle = 0.0;
-  double _currentAngle = 0.0;
+  double _currentAngle = - (1 / 4 * pi);
 
   @override
   void initState() {
@@ -170,7 +170,7 @@ class _AmmeterWidgetState extends State<AmmeterWidget>
           Positioned(
             bottom: pointerOffsetY,  // 使用Positioned来定位指针
             child: Transform.rotate(
-              angle: _currentAngle - (1 / 4 * pi),
+              angle: _currentAngle ,
               alignment: Alignment.bottomCenter,
               child: Container(
                 width: 8,
@@ -241,7 +241,7 @@ class _AmmeterBackgroundPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return true;
+    return false;
   }
 }
 
@@ -349,6 +349,6 @@ class _ScalePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return true;
+    return false;
   }
 }
