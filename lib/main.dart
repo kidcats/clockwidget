@@ -12,7 +12,7 @@ void main() {
       child: const MyApp(),
     ),
   );
-  // debugPaintSizeEnabled = true;  // 开启布局边界显示
+  debugPaintSizeEnabled = true;  // 开启布局边界显示
 }
 
 class MyApp extends StatelessWidget {
