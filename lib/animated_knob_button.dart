@@ -159,40 +159,47 @@ class _AmmeterWidgetState extends State<AmmeterWidget>
   }
 
   Widget _buildPointer(Size size) {
-    final pointerLength = size.height * 0.6;
-    return AnimatedBuilder(
-      animation: _animation,
-      builder: (context, child) {
-        return Transform(
-          transform: Matrix4.identity()
-            ..translate(0.0, -size.height * 0.08)
-            ..rotateZ(_currentAngle - (1 / 4 * pi)),
-          alignment: Alignment.bottomCenter,
-          child: Container(
-            width: 8,
-            height: pointerLength,
-            decoration: BoxDecoration(
-              color: widget.pointerColor,
-              borderRadius: BorderRadius.circular(2),
-              gradient: LinearGradient(
-                colors: [
-                  widget.pointerColor.withOpacity(0.7),
-                  widget.pointerColor.withOpacity(0.9),
-                ],
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
-                  blurRadius: 2,
-                  offset: Offset(0, 1),
+  final pointerLength = size.height * 0.6;
+  final pointerOffsetY = size.height * 0.25;  // 计算Y轴偏移量
+  return AnimatedBuilder(
+    animation: _animation,
+    builder: (context, child) {
+      return Stack(
+        alignment: Alignment.bottomCenter,
+        children: [
+          Positioned(
+            bottom: pointerOffsetY,  // 使用Positioned来定位指针
+            child: Transform.rotate(
+              angle: _currentAngle - (1 / 4 * pi),
+              alignment: Alignment.bottomCenter,
+              child: Container(
+                width: 8,
+                height: pointerLength,
+                decoration: BoxDecoration(
+                  color: widget.pointerColor,
+                  borderRadius: BorderRadius.circular(2),
+                  gradient: LinearGradient(
+                    colors: [
+                      widget.pointerColor.withOpacity(0.7),
+                      widget.pointerColor.withOpacity(0.9),
+                    ],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 2,
+                      offset: Offset(0, 1),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
-        );
-      },
-    );
-  }
+        ],
+      );
+    },
+  );
+}
 
   Widget _buildCenterPoint(Size size) {
     final centerPointRadius = widget.centerPointSize;
