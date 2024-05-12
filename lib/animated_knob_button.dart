@@ -191,55 +191,41 @@ class _AmmeterWidgetState extends State<AmmeterWidget>
     );
   }
 
-  Widget _buildPointer(Size size) {
-    final pointerLength = size.height * 0.6;
-    final pointerOffsetY = size.height * 0.25; // 计算Y轴偏移量
-    offsetAngle = atan(pointerOffsetY / (size.height * 0.4 / 2));
-    return AnimatedBuilder(
-      animation: _animation,
-      builder: (context, child) {
-        return Stack(
-          alignment: Alignment.bottomCenter,
-          children: [
-            Positioned(
-              bottom: 0, // 使用Positioned来定位指针
-              // bottom: pointerOffsetY, // 使用Positioned来定位指针
-              child: Transform.rotate(
-                angle: _currentAngle,
-                alignment: Alignment.bottomCenter,
-                child: Container(
-                  width: 8,
-                  height: pointerLength,
-                  decoration: BoxDecoration(
-                    color: widget.pointerColor,
-                    borderRadius: BorderRadius.circular(2),
-                    gradient: LinearGradient(
-                      colors: [
-                        widget.pointerColor.withOpacity(0.7),
-                        widget.pointerColor.withOpacity(0.9),
-                      ],
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
-                        blurRadius: 2,
-                        offset: Offset(0, 1),
-                      ),
-                    ],
-                  ),
+Widget _buildPointer(Size size) {
+  final pointerLength = size.height * 0.6;
+  final pointerOffsetY = size.height * 0.1;
+  final offsetAngle = atan(pointerOffsetY / (pointerLength / 2));
+
+  return AnimatedBuilder(
+    animation: _animation,
+    builder: (context, child) {
+      return Stack(
+        alignment: Alignment.bottomCenter,
+        children: [
+          Positioned(
+            bottom: pointerOffsetY,
+            child: Transform.rotate(
+              angle: _currentAngle - offsetAngle,
+              alignment: Alignment.bottomCenter,
+              child: CustomPaint(
+                painter: _ScalePointerPainter(
+                  angle: _currentAngle,
+                  pointerLength: min(size.width, size.height) * 0.65,
+                  pointerWidth: 8,
                 ),
               ),
             ),
-          ],
-        );
-      },
-    );
-  }
+          ),
+        ],
+      );
+    },
+  );
+}
 
   Widget _buildCenterPoint(Size size) {
     final centerPointRadius = widget.centerPointSize;
     return Transform(
-      transform: Matrix4.identity()..translate(0.0, size.height * 0.22),
+      transform: Matrix4.identity()..translate(0.0, size.height * 0.4),
       child: Container(
         width: centerPointRadius,
         height: centerPointRadius,
@@ -285,11 +271,13 @@ class _ScalePainter extends CustomPainter {
   final double minAngle;
   final double maxAngle;
   final TextPainter textPainter;
+  final double minorTicksPerInterval;
 
   _ScalePainter({
     required this.scaleValues,
     required this.minAngle,
     required this.maxAngle,
+    this.minorTicksPerInterval = 10,
   }) : textPainter = TextPainter(
           textDirection: TextDirection.ltr,
           textAlign: TextAlign.center,
@@ -297,84 +285,128 @@ class _ScalePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final centerX = size.width / 2;
-    final centerY = size.height / 2;
-    final radius = min(size.width, size.height) * 0.9; // 圆弧的半径
-    // final radius = -300; // 圆弧的半径
-    final markPaint = Paint() // 长刻度的画笔
+    final width = size.width;
+    final height = size.height;
+    final centerX = width / 2;
+    final radius = max(width, height) * 0.3;
+    final tickLength = radius * 0.05;
+    final minorTickLength = tickLength * 0.5;
+
+    final linePaint = Paint()
       ..color = Colors.black
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
+      ..strokeWidth = 2.0;
 
-    final double angleRange = maxAngle - minAngle; // 度数范围
-    final int totalMarks = scaleValues.length; // 刻度范围
-    canvas.rotate(pi / 2); // 画布旋转现在X轴向下，Y轴向左边
-    canvas.translate(size.height, -centerX); // 画布平移 ，这个真的有用吗？打印的都是0，为什么
+    final tickPaint = Paint()
+      ..color = Colors.black
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
 
-    for (int i = 0; i < totalMarks; i++) {
+    final minorTickPaint = Paint()
+      ..color = Colors.grey
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+
+    final angleRange = maxAngle - minAngle;
+    final totalTicks = scaleValues.length;
+    final tickAngleInterval = angleRange / (totalTicks - 1);
+
+    canvas.translate(centerX, size.height/2+radius * cos(angleRange / 2));
+    canvas.rotate(-pi / 2);
+
+    // 绘制圆弧
+    canvas.drawArc(
+      Rect.fromCircle(center: Offset.zero, radius: radius),
+      minAngle,
+      angleRange,
+      false,
+      linePaint,
+    );
+
+    for (int i = 0; i < totalTicks; i++) {
       final value = scaleValues[i];
-      final angle =
-          minAngle + (i / (totalMarks - 1)) * angleRange; // 总共有这么多大的刻度，直接平分
-      const isLongMark = true;
-      const markLength = 16.0; // 长刻度的长度
-      final markRadius = radius - markLength / 2; //刻度的直径 ? 由于半径太长了，所以超出屏幕外面了
-      final markX = 0 - markRadius * cos(angle);
-      final markY = 0 - markRadius * sin(angle);
+      final angle = minAngle + i * tickAngleInterval;
+
+      // 绘制主刻度
       canvas.save();
-      canvas.translate(markX, markY);
-      canvas.rotate(angle - pi / 2);
+      canvas.rotate(angle);
       canvas.drawLine(
-        Offset(0, -markLength / 2),
-        Offset(0, markLength / 2),
-        markPaint,
+        Offset(radius - tickLength, 0),
+        Offset(radius+tickLength, 0),
+        tickPaint,
       );
       canvas.restore();
 
-      if (i < totalMarks - 1) {
-        final nextValue = scaleValues[i + 1];
-        final nextAngle = minAngle + ((i + 1) / (totalMarks - 1)) * angleRange;
-        final auxiliaryMarksCount = 10;
+      // 绘制主刻度上的数值
+      textPainter.text = TextSpan(
+        text: value.toStringAsFixed(1),
+        style: TextStyle(color: Colors.black, fontSize: 16),
+      );
+      textPainter.layout();
+      canvas.save();
+      canvas.translate(
+        (radius - tickLength - 16) * cos(angle),
+        (radius - tickLength - 16) * sin(angle),
+      );
+      canvas.rotate(angle + pi / 2);
+      textPainter.paint(canvas, Offset(-textPainter.width / 2, 0));
+      canvas.restore();
 
-        for (int j = 1; j <= auxiliaryMarksCount; j++) {
-          final fraction = j / (auxiliaryMarksCount + 1);
-          final auxiliaryAngle = angle + fraction * (nextAngle - angle);
-
-          final auxiliaryMarkX = 0 - markRadius * cos(auxiliaryAngle);
-          final auxiliaryMarkY = 0 - markRadius * sin(auxiliaryAngle);
-
+      // 绘制次刻度
+      if (i < totalTicks - 1) {
+        final minorTickAngleInterval = tickAngleInterval / (minorTicksPerInterval + 1);
+        for (int j = 1; j <= minorTicksPerInterval; j++) {
+          final minorAngle = angle + j * minorTickAngleInterval;
           canvas.save();
-          canvas.translate(auxiliaryMarkX, auxiliaryMarkY);
-          canvas.rotate(auxiliaryAngle - pi / 2);
-
+          canvas.rotate(minorAngle);
           canvas.drawLine(
-            Offset(0, -4.0),
-            Offset(0, 4.0),
-            markPaint..strokeWidth = 0.5,
+            Offset(radius - minorTickLength, 0),
+            Offset(radius, 0),
+            minorTickPaint,
           );
-
           canvas.restore();
         }
       }
-
-      canvas.save();
-      canvas.translate(markX, markY);
-      canvas.rotate(angle - pi / 2);
-      if (isLongMark) {
-        textPainter.text = TextSpan(
-          text: value.toStringAsFixed(0),
-          style: TextStyle(color: Colors.black, fontSize: 12),
-        );
-        textPainter.layout();
-        textPainter.paint(
-          canvas,
-          Offset(
-            -textPainter.width / 2,
-            markLength / 2 + 4,
-          ),
-        );
-      }
-      canvas.restore();
     }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return true;
+  }
+}
+
+class _ScalePointerPainter extends CustomPainter {
+  final double angle;
+  final double pointerLength;
+  final double pointerWidth;
+
+  _ScalePointerPainter({
+    required this.angle,
+    required this.pointerLength,
+    required this.pointerWidth,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final centerX = size.width / 2;
+    final centerY = size.height / 2;
+    final radius = max(size.width, size.height) * 0.7;
+
+    final pointerPaint = Paint()
+      ..color = Colors.red
+      ..style = PaintingStyle.fill;
+
+    canvas.translate(centerX, centerY);
+    canvas.rotate(angle);
+
+    final pointerPath = Path()
+      ..moveTo(-pointerWidth / 2, 0)
+      ..lineTo(0, -pointerLength)
+      ..lineTo(pointerWidth / 2, 0) 
+      ..close();
+
+    canvas.drawPath(pointerPath, pointerPaint);
   }
 
   @override
