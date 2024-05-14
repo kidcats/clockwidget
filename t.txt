@@ -1,25 +1,3 @@
- Dart 代码实现了一个自定义的 Flutter 小部件 AmmeterWidget，模拟了一个电流表的表盘，包括指针和刻度。以下是我审核代码时发现的一些问题和潜在改进点：
-
-1. 动画的实现
-代码中创建了一个 AnimationController 但实际上并没有使用它来驱动任何动画效果。_animation 变量被定义为 CurvedAnimation 但没有在任何可视效果中使用。如果您想要在调整值时有平滑的指针移动动画，应该在 _updateValue 方法中使用这个动画来更新 _currentAngle。
-
-2. 初始 _currentAngle 的设置
-_currentAngle 在 initState 中并未设置为对应 _currentValue 的角度。这可能会导致初始指针位置不正确。您应该根据 _currentValue 计算一个初始的 _currentAngle。
-
-3. _ScalePainter 类中的绘制逻辑
-在 _ScalePainter 中，代码对于长刻度的处理似乎不完整。变量 isLongMark 被设置为 true，但看起来这应该依据刻度值来动态决定。此外，刻度值的绘制应该在循环中进行，确保每个长刻度旁都有数值。
-
-4. 角度计算
- _handlePanUpdate 方法中使用 (localPosition - center).direction 来计算触摸的角度，这个方法有效但需要确保 _startAngle 的初始值也是正确设置的。
-
-5. UI 组件的细节
-在 _buildPointer 方法中，您使用了 Colors.red[700]! 和 Colors.red[900]!，这是有效的，但如果在未来 Flutter 版本中这些颜色的索引被修改，可能会引发问题。建议定义具体的颜色值以避免潜在的 null 引用。
-
-6. 设备适应性
-代码使用了固定像素值（如指针长度200.0），这在不同屏幕尺寸和分辨率的设备上可能会导致显示问题。建议使用相对尺寸或通过 MediaQuery 获取的设备信息来调整这些值。
-
-7. 性能优化
-在 _ScalePainter 和 _AmmeterBackgroundPainter 的 shouldRepaint 方法中，您返回了 true，这意味着每次绘制时都会重新绘制这些画笔。这可能不是必要的，特别是如果 scaleValues, minAngle, maxAngle 等不发生变化时。
-
-总结
-代码基本上是实现了功能的，但需要一些调整以确保更稳定、更流畅和更适应不同设备。您可能还需要添加更多注释来帮助其他开发者（或未来的您）更好地理解代码的工作方式。
+现在是什么情况，情况是当宽度变化的时候，虽然指针的角度不变，但是弧度的变化会导致刻度0的位置发生变化
+那么指针是不会变的，指针的长度和角度都没有发生变化，所以才导致出的问题，现在就需要更新一下指针的绘制过程
+先考虑一下角度问题，当宽高变化的时候，角度应该是多少呢
