@@ -85,7 +85,7 @@ class HomePage extends StatelessWidget {
                     ),
                     SizedBox(height: 20),
                     Container(
-                      height: scaffoldHeight*0.6,
+                      height: scaffoldHeight * 0.6,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(15.0),
                         boxShadow: [
@@ -97,18 +97,10 @@ class HomePage extends StatelessWidget {
                         ],
                       ),
                       child: AmmeterWidget(
-                        scaleValues: [
-                          0,
-                          20,
-                          40,
-                          60,
-                          100,
-                          120,
-                          140,
-                          160,
-                          180,
-                          200
-                        ],
+                        scaleValues: [0,20,40,60,100,120,140,160,180,200],
+                        onValueChanged: (newValue){
+                          print(newValue.round());
+                        },
                       ),
                     ),
                     SizedBox(height: 20),

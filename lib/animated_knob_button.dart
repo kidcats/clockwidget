@@ -7,14 +7,14 @@ class AmmeterWidget extends StatefulWidget {
   final double pointerLength;
   final double centerPointSize;
   final Color pointerColor;
-  final ValueChanged<double>? onValueChanged;
+  final ValueChanged<double> onValueChanged;
 
   AmmeterWidget({
     required this.scaleValues,
     this.pointerLength = 200.0,
     this.centerPointSize = 20.0,
     this.pointerColor = Colors.red,
-    this.onValueChanged,
+    required this.onValueChanged,
   });
 
   @override
@@ -93,8 +93,7 @@ class _AmmeterWidgetState extends State<AmmeterWidget>
               children: [
                 _buildAmmeterBackground(size),
                 _buildScale(size, maxAngle, minAngle),
-                _buildPointer(size),
-                _buildCenterPoint(size),
+                // _buildCenterPoint(size),
               ],
             ),
           );
@@ -106,30 +105,35 @@ class _AmmeterWidgetState extends State<AmmeterWidget>
   // 缩放因子,降低角度变化的敏感度
   double scale = 0.4;
 
+  double _calculateValue(double angle) {
+    final angleRange = maxAngle - minAngle;
+    final valueRange = widget.scaleValues.last - widget.scaleValues.first;
+    final angleFraction = (angle - minAngle) / angleRange;
+    final value = widget.scaleValues.first + valueRange * angleFraction;
+    return value;
+  }
+
   void _handlePanStart(DragStartDetails details) {
     _animationController.stop(); // 停止当前动画
     _previousMouseX = details.globalPosition.dx; // 记录鼠标起始水平位置
   }
 
   void _handlePanUpdate(DragUpdateDetails details) {
-    final double _minAngle = minAngle;
-    final double _maxAngle = maxAngle;
     double newMouseX = details.globalPosition.dx;
     double dx = newMouseX - _previousMouseX;
     double deltaAngle = dx / _ticksPerPixel;
 
     double newAngle = _currentAngle + deltaAngle;
-    newAngle = newAngle.clamp(_minAngle, _maxAngle);
+    newAngle = newAngle.clamp(minAngle, maxAngle);
 
-    double newTick = ((newAngle - _minAngle) * _ticksPerPixel).roundToDouble();
+    double newTick = ((newAngle - minAngle) * _ticksPerPixel).roundToDouble();
     newTick = newTick.clamp(0, _totalTicks);
 
     if (_currentTick != newTick) {
       setState(() {
         _currentTick = newTick;
         _currentAngle = newAngle;
-        widget.onValueChanged?.call(widget.scaleValues[
-            (_currentTick ~/ 10).clamp(0, widget.scaleValues.length - 1)]);
+        widget.onValueChanged.call(_calculateValue(newAngle));
       });
     }
 
@@ -162,8 +166,6 @@ class _AmmeterWidgetState extends State<AmmeterWidget>
         setState(() {
           _currentTick = _animation.value;
           _currentAngle = _minAngle + (_currentTick / _ticksPerPixel);
-          widget.onValueChanged?.call(widget.scaleValues[
-              (_currentTick ~/ 10).clamp(0, widget.scaleValues.length - 1)]);
         });
       });
 
@@ -172,35 +174,6 @@ class _AmmeterWidgetState extends State<AmmeterWidget>
       ..forward();
   }
 
-Widget _buildPointer(Size size) {
-  final pointerLength = size.height * 0.6;
-  final pointerOffsetY = size.height * 0.1;
-  final offsetAngle = atan(pointerOffsetY / (pointerLength / 2));
-
-  return GestureDetector(
-    behavior: HitTestBehavior.opaque,
-    child: CustomPaint(
-      size: size,
-      painter: _ScalePointerPainter(
-        angle: _currentAngle,
-        pointerLength: min(size.width, size.height) * 0.85,
-        pointerWidth: 8,
-        minAngle: minAngle,
-        maxAngle: maxAngle,
-        onAngleChanged: (newAngle) {
-          setState(() {
-            _currentAngle = newAngle;
-            _currentTick = ((newAngle - minAngle) * _ticksPerPixel).roundToDouble();
-            widget.onValueChanged?.call(widget.scaleValues[
-                (_currentTick ~/ 10).clamp(0, widget.scaleValues.length - 1)]);
-          });
-        },
-      ),
-    ),
-  );
-}
-
-
   Widget _buildAmmeterBackground(Size size) {
     return CustomPaint(
       painter: _AmmeterBackgroundPainter(size),
@@ -208,33 +181,49 @@ Widget _buildPointer(Size size) {
   }
 
   Widget _buildScale(Size size, double maxAngle, double minAngle) {
-    return Container(
-      width: size.width,
-      height: size.height,
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       child: CustomPaint(
+        size: size,
         painter: _ScalePainter(
           scaleValues: widget.scaleValues,
           minAngle: minAngle,
           maxAngle: maxAngle,
+          angle: _currentAngle,
+          pointerLength: min(size.width, size.height) * 0.85,
+          pointerWidth: 8,
+          onValueChanged: (value){
+            widget.onValueChanged(value);
+          },
+          onAngleChanged: (newAngle) {
+            setState(() {
+              _currentAngle = newAngle;
+              _currentTick =
+                  ((newAngle - minAngle) * _ticksPerPixel).roundToDouble();
+              widget.onValueChanged?.call(widget.scaleValues[
+                  (_currentTick ~/ 10)
+                      .clamp(0, widget.scaleValues.length - 1)]);
+            });
+          },
         ),
       ),
     );
   }
 
-  Widget _buildCenterPoint(Size size) {
-    final centerPointRadius = widget.centerPointSize;
-    return Transform(
-      transform: Matrix4.identity()..translate(0.0, size.height * 0.4),
-      child: Container(
-        width: centerPointRadius,
-        height: centerPointRadius,
-        decoration: BoxDecoration(
-          color: Colors.black,
-          shape: BoxShape.circle,
-        ),
-      ),
-    );
-  }
+  // Widget _buildCenterPoint(Size size) {
+  //   final centerPointRadius = widget.centerPointSize;
+  //   return Transform(
+  //     transform: Matrix4.identity()..translate(0.0, size.height * 0.4),
+  //     child: Container(
+  //       width: centerPointRadius,
+  //       height: centerPointRadius,
+  //       decoration: BoxDecoration(
+  //         color: Colors.black,
+  //         shape: BoxShape.circle,
+  //       ),
+  //     ),
+  //   );
+  // }
 }
 
 class _AmmeterBackgroundPainter extends CustomPainter {
@@ -271,16 +260,22 @@ class _ScalePainter extends CustomPainter {
   final double maxAngle;
   final TextPainter textPainter;
   final double minorTicksPerInterval;
-   final double angle;
+  double angle;
   final double pointerLength;
   final double pointerWidth;
-    final Function(double) onAngleChanged;
-
+  final Function(double) onAngleChanged;
+  final Function(double) onValueChanged; // 新增的回调函数参数
+  late Size size;
   _ScalePainter({
     required this.scaleValues,
     required this.minAngle,
     required this.maxAngle,
     this.minorTicksPerInterval = 10,
+    required this.angle,
+    required this.pointerLength,
+    required this.pointerWidth,
+    required this.onAngleChanged,
+    required this.onValueChanged, // 新增的回调函数参数
   }) : textPainter = TextPainter(
           textDirection: TextDirection.ltr,
           textAlign: TextAlign.center,
@@ -288,6 +283,7 @@ class _ScalePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    this.size = size;
     final width = size.width;
     final height = size.height;
     final centerX = width / 2;
@@ -314,18 +310,21 @@ class _ScalePainter extends CustomPainter {
     final totalTicks = scaleValues.length;
     final tickAngleInterval = angleRange / (totalTicks - 1);
 
-
-      // 现在来画指针
+    // 现在来画指针和圆心
     final centerY = size.height / 2;
-    final pointerLength = max(size.width, size.height) * 0.28;
+    final centerPointRadius = size.height * 0.02;
+    final pointerLength = radius * 0.85;
     final pointerWidth = pointerLength * 0.02;
-    angle = acos(radius*sin(angleRange/2) / pointerLength) ;
     final pointerPaint = Paint()
       ..color = Colors.red
       ..style = PaintingStyle.fill;
+    final centerPointPaint = Paint()
+      ..color = Colors.black
+      ..style = PaintingStyle.fill;
+
     canvas.save();
-    canvas.translate(centerX, centerY + 0.4 * size.height);
-    canvas.rotate(-angle); // 这里是变化角度的位置，这个angle是需要随时变化的，这里的angle就已经不对了，所以后面的都不对
+    canvas.translate(centerX, size.height / 2 + radius * cos(angleRange / 2));
+    canvas.rotate(angle); // 这里是变化角度的位置，这个angle是需要随时变化的，这里的angle就已经不对了，所以后面的都不对
 
     final pointerPath = Path()
       ..moveTo(-pointerWidth / 2, 0)
@@ -334,8 +333,10 @@ class _ScalePainter extends CustomPainter {
       ..close();
 
     canvas.drawPath(pointerPath, pointerPaint);
-    canvas.restore();
 
+    // 画圆心
+    canvas.drawCircle(Offset.zero, centerPointRadius, centerPointPaint);
+    canvas.restore();
 
     // 现在来画圆弧
     canvas.translate(centerX, size.height / 2 + radius * cos(angleRange / 2));
@@ -367,7 +368,7 @@ class _ScalePainter extends CustomPainter {
       // 绘制主刻度上的数值
       textPainter.text = TextSpan(
         text: value.toStringAsFixed(1),
-        style: TextStyle(color: Colors.black, fontSize: 16),
+        style: const TextStyle(color: Colors.black, fontSize: 16),
       );
       textPainter.layout();
       canvas.save();
@@ -399,65 +400,16 @@ class _ScalePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return true;
-  }
-}
-
-class _ScalePointerPainter extends CustomPainter {
-  final double angle;
-  final double pointerLength;
-  final double pointerWidth;
-  final double minAngle;
-  final double maxAngle;
-  final Function(double) onAngleChanged;
-
-  late Size size;
-
-  _ScalePointerPainter({
-    required this.angle,
-    required this.pointerLength,
-    required this.pointerWidth,
-    required this.minAngle,
-    required this.maxAngle,
-    required this.onAngleChanged,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    this.size = size;
-    final centerX = size.width / 2;
-    final centerY = size.height / 2;
-    final pointerLength = max(size.width, size.height) * 0.28;
-    final pointerWidth = pointerLength * 0.02;
-    final angleRange = maxAngle - minAngle;
-    final radius = max(size.width, size.height) * 0.3;
-    final pointerPaint = Paint()
-      ..color = Colors.red
-      ..style = PaintingStyle.fill;
-    canvas.translate(centerX, centerY + 0.4 * size.height);
-    canvas.rotate(-angle); // 这里是变化角度的位置，这个angle是需要随时变化的，这里的angle就已经不对了，所以后面的都不对
-
-    final pointerPath = Path()
-      ..moveTo(-pointerWidth / 2, 0)
-      ..lineTo(0, -pointerLength)
-      ..lineTo(pointerWidth / 2, 0)
-      ..close();
-
-    canvas.drawPath(pointerPath, pointerPaint);
-  }
-  
-  @override
   bool hitTest(Offset position) {
-    return (position - Offset(size.width / 2, size.height / 2)).distance <= pointerLength;
+    return (position - Offset(size.width / 2, size.height / 2)).distance <=
+        pointerLength;
   }
 
   @override
-  bool shouldRepaint(covariant _ScalePointerPainter oldDelegate) {
+  bool shouldRepaint(covariant _ScalePainter oldDelegate) {
     return true;
   }
 
-  @override
   void handleEvent(PointerEvent event, HitTestEntry entry) {
     if (event is PointerDownEvent) {
       _handlePanStart(event.localPosition);
@@ -478,4 +430,5 @@ class _ScalePointerPainter extends CustomPainter {
     final newAngle = dragAngle.clamp(minAngle, maxAngle);
     onAngleChanged(newAngle);
   }
+
 }
