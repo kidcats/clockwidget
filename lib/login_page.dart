@@ -14,7 +14,7 @@ class LoginPage extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Colors.blue, Colors.lightBlueAccent],
+            colors: [Colors.blue.shade400, Colors.blue.shade900],
           ),
         ),
         child: Center(
@@ -29,7 +29,7 @@ class LoginPage extends StatelessWidget {
                     width: 150,
                     height: 150,
                   ),
-                  SizedBox(height: 20),
+                  SizedBox(height: 30),
                   Text(
                     'Login',
                     style: TextStyle(
@@ -38,63 +38,98 @@ class LoginPage extends StatelessWidget {
                       color: Colors.white,
                     ),
                   ),
-                  SizedBox(height: 20),
-                  TextField(
-                    controller: _usernameController,
-                    style: TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      labelText: 'Username',
-                      labelStyle: TextStyle(color: Colors.white),
-                      prefixIcon: Icon(Icons.person, color: Colors.white),
-                      enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.white),
-                      ),
-                      focusedBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.white),
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 20),
-                  TextField(
-                    controller: _passwordController,
-                    style: TextStyle(color: Colors.white),
-                    obscureText: true,
-                    decoration: InputDecoration(
-                      labelText: 'Password',
-                      labelStyle: TextStyle(color: Colors.white),
-                      prefixIcon: Icon(Icons.lock, color: Colors.white),
-                      enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.white),
-                      ),
-                      focusedBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.white),
-                      ),
-                    ),
-                  ),
                   SizedBox(height: 30),
-                  ElevatedButton(
-                    child: Text('Login'),
-                    onPressed: () async {
-                      String username = _usernameController.text;
-                      String password = _passwordController.text;
-                      bool isLoggedIn = await performLogin(username, password);
-                      if (isLoggedIn) {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (context) => HomePage()),
-                        );
-                      } else {
-                        // 显示登录失败的提示或错误消息
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.blue,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
+                  Center(
+                    child: Container(
+                      width: 300, // Adjust the width as needed
+                      child: Column(
+                        children: [
+                          TextField(
+                            controller: _usernameController,
+                            style: TextStyle(color: Colors.white),
+                            decoration: InputDecoration(
+                              labelText: 'Username',
+                              labelStyle: TextStyle(color: Colors.white),
+                              prefixIcon: Icon(Icons.person, color: Colors.white),
+                              filled: true,
+                              fillColor: Colors.white.withOpacity(0.1),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(30),
+                                borderSide: BorderSide(color: Colors.transparent),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(30),
+                                borderSide: BorderSide(color: Colors.white),
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 20),
+                          TextField(
+                            controller: _passwordController,
+                            style: TextStyle(color: Colors.white),
+                            obscureText: true,
+                            decoration: InputDecoration(
+                              labelText: 'Password',
+                              labelStyle: TextStyle(color: Colors.white),
+                              prefixIcon: Icon(Icons.lock, color: Colors.white),
+                              filled: true,
+                              fillColor: Colors.white.withOpacity(0.1),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(30),
+                                borderSide: BorderSide(color: Colors.transparent),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(30),
+                                borderSide: BorderSide(color: Colors.white),
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 30),
+                          ElevatedButton(
+                            child: Text(
+                              'Login',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            onPressed: () async {
+                              String username = _usernameController.text;
+                              String password = _passwordController.text;
+                              bool isLoggedIn = await performLogin(username, password);
+                              if (isLoggedIn) {
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => HomePage()),
+                                );
+                              } else {
+                                // Show login failed message or error
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    title: Text('Login Failed'),
+                                    content: Text('Incorrect username or password.'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        child: Text('OK'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: Colors.blue.shade900,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                            ),
+                          ),
+                        ],
                       ),
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 30, vertical: 15),
                     ),
                   ),
                 ],
@@ -107,10 +142,17 @@ class LoginPage extends StatelessWidget {
   }
 
   Future<bool> performLogin(String username, String password) async {
-    // 在这里执行实际的登录逻辑,例如发送登录请求到服务器进行验证
-    // 如果登录成功,将登录状态保存到本地存储
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('isLoggedIn', true);
-    return true;
+    // Here we use hardcoded credentials for demonstration purposes.
+    // In a real-world application, you would validate against a database or authentication service.
+    const hardcodedUsername = 'user';
+    const hardcodedPassword = 'password';
+
+    if (username == hardcodedUsername && password == hardcodedPassword) {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('isLoggedIn', true);
+      return true;
+    } else {
+      return false;
+    }
   }
 }

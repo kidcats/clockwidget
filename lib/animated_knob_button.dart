@@ -91,7 +91,7 @@ class _AmmeterWidgetState extends State<AmmeterWidget>
             child: Stack(
               alignment: Alignment.center,
               children: [
-                _buildAmmeterBackground(size),
+                // _buildAmmeterBackground(size),
                 _buildScale(size, maxAngle, minAngle),
                 // _buildCenterPoint(size),
               ],
