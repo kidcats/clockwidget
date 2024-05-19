@@ -82,7 +82,7 @@ class WelcomePage extends StatelessWidget {
 
   Future<bool> checkLoginStatus() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    // return false;
-    return prefs.getBool('isLoggedIn') ?? false;
+    return true;
+    // return prefs.getBool('isLoggedIn') ?? false;
   }
 }

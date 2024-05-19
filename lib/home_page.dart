@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:my_app/DigitalTubeInput.dart';
 import 'package:provider/provider.dart';
 import 'package:my_app/animated_knob_button.dart';
 import 'package:window_manager/window_manager.dart';
@@ -9,7 +10,7 @@ class HomePage extends StatefulWidget {
   _HomePageState createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> with WindowListener{
+class _HomePageState extends State<HomePage> with WindowListener {
   int _integerPart = 0;
   int _decimalPart = 0;
 
@@ -51,6 +52,19 @@ class _HomePageState extends State<HomePage> with WindowListener{
     final provider = Provider.of<CalculatorProvider>(context);
     final size = MediaQuery.of(context).size;
 
+    int combinedNumber = 0;
+    void updateCombinedNumber(int number) {
+      setState(() {
+        combinedNumber = number;
+      });
+    }
+
+    void resetDigitalTubes() {
+      setState(() {
+        combinedNumber = 0;
+      });
+    }
+
     // Define icon and text sizes
     final double iconsize = 40;
     final double signalsize = 22;
@@ -76,12 +90,15 @@ class _HomePageState extends State<HomePage> with WindowListener{
             return Column(
               children: [
                 SizedBox(height: 30),
-                Text(
-                  '请分别旋转指针锁定输入',
-                  style: TextStyle(
-                    fontSize: 24,
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
+                ElevatedButton(
+                  onPressed: () => {print("hello")},
+                  child: Text(
+                    '请分别旋转指针锁定输入',
+                    style: TextStyle(
+                      fontSize: 24,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 SizedBox(height: 20),
@@ -108,7 +125,18 @@ class _HomePageState extends State<HomePage> with WindowListener{
                             Container(
                               height: circleDiameter * 0.8,
                               child: AmmeterWidget(
-                                scaleValues: [0, 20, 40, 60, 100, 120, 140, 160, 180, 200],
+                                scaleValues: [
+                                  0,
+                                  20,
+                                  40,
+                                  60,
+                                  100,
+                                  120,
+                                  140,
+                                  160,
+                                  180,
+                                  200
+                                ],
                                 onValueChanged: (value) {
                                   _updateIntegerPart(context, value);
                                 },
@@ -119,20 +147,15 @@ class _HomePageState extends State<HomePage> with WindowListener{
                       ),
                     ),
                     SizedBox(width: 20),
-                    Row(
+                    Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        _buildDigitalTube(_integerPart ~/ 100),
-                        _buildDigitalTube((_integerPart ~/ 10) % 10),
-                        _buildDigitalTube(_integerPart % 10),
+                        DigitalTubeInput(onNumberChanged: updateCombinedNumber),
+                        SizedBox(height: 20),
                         Text(
-                          '.',
-                          style: TextStyle(
-                            fontSize: 36,
-                            color: Colors.white,
-                          ),
+                          'Combined Number: $combinedNumber',
+                          style: TextStyle(fontSize: 24),
                         ),
-                        _buildDigitalTube(_decimalPart),
                       ],
                     ),
                     SizedBox(width: 20),
@@ -176,94 +199,99 @@ class _HomePageState extends State<HomePage> with WindowListener{
                     children: [
                       Expanded(
                         child: Card(
-                          color: Colors.blue.shade100,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15.0),
-                          ),
-                          elevation: 5,
-                          child: SizedBox(
-                            height: circleDiameter*0.6,
-                            child: Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 20),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Row(
+                            color: Colors.blue.shade100,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15.0),
+                            ),
+                            elevation: 5,
+                            child: SizedBox(
+                              height: circleDiameter * 0.6,
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 20),
+                                child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
-                                    Icon(Icons.electrical_services, size: iconsize, color: Colors.blue.shade900),
-                                    SizedBox(width: 10),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.electrical_services,
+                                            size: iconsize,
+                                            color: Colors.blue.shade900),
+                                        SizedBox(width: 10),
+                                        Text(
+                                          '接触器电流数值',
+                                          style: TextStyle(
+                                            fontSize: signalsize,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.blue.shade900,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(height: 20),
                                     Text(
-                                      '接触器电流数值',
+                                      '${provider.contactorAmperage}A',
                                       style: TextStyle(
-                                        fontSize: signalsize,
+                                        fontSize: resultsize,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.blue.shade900,
                                       ),
                                     ),
                                   ],
                                 ),
-                                SizedBox(height: 20),
-                                Text(
-                                  '${provider.contactorAmperage}A',
-                                  style: TextStyle(
-                                    fontSize: resultsize,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.blue.shade900,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          )
-                        ),
+                              ),
+                            )),
                       ),
                       const SizedBox(width: 20),
                       Expanded(
                         child: Card(
-                          color: Colors.blue.shade50,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15.0),
-                          ),
-                          elevation: 5,
-                          child: SizedBox(
-                            height: circleDiameter*0.6,
-                            child: Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 30),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Row(
+                            color: Colors.blue.shade50,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15.0),
+                            ),
+                            elevation: 5,
+                            child: SizedBox(
+                              height: circleDiameter * 0.6,
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 30),
+                                child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
-                                    Icon(Icons.settings_applications, size: iconsize, color: Colors.blue.shade900),
-                                    const SizedBox(width: 10),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.settings_applications,
+                                            size: iconsize,
+                                            color: Colors.blue.shade900),
+                                        const SizedBox(width: 10),
+                                        Text(
+                                          '热继电器整定电流',
+                                          style: TextStyle(
+                                            fontSize: signalsize,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.blue.shade900,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 20),
                                     Text(
-                                      '热继电器整定电流',
+                                      '${provider.minThermalRelayCurrentRange.toStringAsFixed(1)} ~ ${provider.maxThermalRelayCurrentRange.toStringAsFixed(1)}A',
                                       style: TextStyle(
-                                        fontSize: signalsize,
+                                        fontSize: resultsize,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.blue.shade900,
                                       ),
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 20),
-                                Text(
-                                  '${provider.minThermalRelayCurrentRange.toStringAsFixed(1)} ~ ${provider.maxThermalRelayCurrentRange.toStringAsFixed(1)}A',
-                                  style: TextStyle(
-                                    fontSize: resultsize,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.blue.shade900,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          )
-                        ),
+                              ),
+                            )),
                       ),
                     ],
                   ),
@@ -275,6 +303,7 @@ class _HomePageState extends State<HomePage> with WindowListener{
       ),
     );
   }
+
   @override
   void onWindowEvent(String eventName) {
     print('[WindowManager] onWindowEvent: $eventName');
