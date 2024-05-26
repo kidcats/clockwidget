@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:my_app/DigitalTubeInput.dart';
+import 'package:my_app/DigitalTubeInputController.dart';
 import 'package:provider/provider.dart';
 import 'package:my_app/animated_knob_button.dart';
 import 'package:window_manager/window_manager.dart';
@@ -53,6 +54,9 @@ class _HomePageState extends State<HomePage> with WindowListener {
     final size = MediaQuery.of(context).size;
 
     int combinedNumber = 0;
+     final DigitalTubeInputController controller = DigitalTubeInputController();
+
+
     void updateCombinedNumber(int number) {
       setState(() {
         combinedNumber = number;
@@ -91,12 +95,12 @@ class _HomePageState extends State<HomePage> with WindowListener {
               children: [
                 SizedBox(height: 30),
                 ElevatedButton(
-                  onPressed: () => {print("hello")},
+                  onPressed: () => { controller.resetDigits()},
                   child: Text(
-                    '请分别旋转指针锁定输入',
+                    '重置',
                     style: TextStyle(
                       fontSize: 24,
-                      color: Colors.white,
+                      color: Colors.black,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -150,7 +154,7 @@ class _HomePageState extends State<HomePage> with WindowListener {
                     Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        DigitalTubeInput(onNumberChanged: updateCombinedNumber),
+                        DigitalTubeInput(onNumberChanged: updateCombinedNumber,controller: controller,),
                         SizedBox(height: 20),
                         Text(
                           'Combined Number: $combinedNumber',

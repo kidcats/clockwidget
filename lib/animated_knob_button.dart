@@ -200,7 +200,7 @@ class _AmmeterWidgetState extends State<AmmeterWidget>
               _currentAngle = newAngle;
               _currentTick =
                   ((newAngle - minAngle) * _ticksPerPixel).roundToDouble();
-              widget.onValueChanged?.call(widget.scaleValues[
+              widget.onValueChanged.call(widget.scaleValues[
                   (_currentTick ~/ 10)
                       .clamp(0, widget.scaleValues.length - 1)]);
             });
@@ -208,6 +208,39 @@ class _AmmeterWidgetState extends State<AmmeterWidget>
         ),
       ),
     );
+  }
+
+   double _calculateAngle(double value) {
+    final valueRange = widget.scaleValues.last - widget.scaleValues.first;
+    final angleRange = maxAngle - minAngle;
+    final valueFraction = (value - widget.scaleValues.first) / valueRange;
+    final angle = minAngle + angleRange * valueFraction;
+    return angle;
+  }
+
+   void movePointerToValue(double value) {
+    final targetAngle = _calculateAngle(value);
+    final targetTick = ((targetAngle - minAngle) * _ticksPerPixel).roundToDouble();
+
+    _animation = Tween<double>(
+      begin: _currentTick,
+      end: targetTick,
+    ).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.decelerate,
+      ),
+    )..addListener(() {
+        setState(() {
+          _currentTick = _animation.value;
+          _currentAngle = minAngle + (_currentTick / _ticksPerPixel);
+        });
+        widget.onValueChanged.call(value);
+      });
+
+    _animationController
+      ..reset()
+      ..forward();
   }
 
   // Widget _buildCenterPoint(Size size) {
