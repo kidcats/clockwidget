@@ -16,6 +16,8 @@ class _HomePageState extends State<HomePage> with WindowListener {
   int _decimalPart = 0;
       double _combinedNumber = 0;
      final DigitalTubeInputController controller = DigitalTubeInputController();
+     final GlobalKey<AmmeterWidgetState> _ammeterKey1 = GlobalKey<AmmeterWidgetState>();
+     final GlobalKey<AmmeterWidgetState> _ammeterKey2 = GlobalKey<AmmeterWidgetState>();
 
 
   @override
@@ -59,6 +61,8 @@ class _HomePageState extends State<HomePage> with WindowListener {
     void updateCombinedNumber(int number) {
       setState(() {
         _combinedNumber = number / 10;
+        _ammeterKey1.currentState?.movePointerToValue(_combinedNumber);
+        _ammeterKey2.currentState?.movePointerToValue(_combinedNumber);
       });
     }
 
@@ -93,17 +97,17 @@ class _HomePageState extends State<HomePage> with WindowListener {
             return Column(
               children: [
                 SizedBox(height: 30),
-                ElevatedButton(
-                  onPressed: () => { controller.resetDigits()},
-                  child: Text(
-                    '重置',
-                    style: TextStyle(
-                      fontSize: 24,
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
+                // ElevatedButton(
+                //   onPressed: () => { controller.resetDigits()},
+                //   child: Text(
+                //     '重置',
+                //     style: TextStyle(
+                //       fontSize: 24,
+                //       color: Colors.black,
+                //       fontWeight: FontWeight.bold,
+                //     ),
+                //   ),
+                // ),
                 SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -128,6 +132,7 @@ class _HomePageState extends State<HomePage> with WindowListener {
                             Container(
                               height: circleDiameter * 0.8,
                               child: AmmeterWidget(
+                                key: _ammeterKey1,
                                 scaleValues: [
                                   0,
                                   20,
@@ -182,6 +187,7 @@ class _HomePageState extends State<HomePage> with WindowListener {
                             Container(
                               height: circleDiameter * 0.8,
                               child: AmmeterWidget(
+                                key: _ammeterKey2,
                                 scaleValues: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
                                 onValueChanged: (value) {
                                   _updateDecimalPart(context, value);

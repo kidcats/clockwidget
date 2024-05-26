@@ -10,18 +10,20 @@ class AmmeterWidget extends StatefulWidget {
   final ValueChanged<double> onValueChanged;
 
   AmmeterWidget({
+    Key? key,
     required this.scaleValues,
     this.pointerLength = 200.0,
     this.centerPointSize = 20.0,
     this.pointerColor = Colors.red,
     required this.onValueChanged,
-  });
+  }) : super(key: key);
 
   @override
-  _AmmeterWidgetState createState() => _AmmeterWidgetState();
+  AmmeterWidgetState createState() => AmmeterWidgetState();
+
 }
 
-class _AmmeterWidgetState extends State<AmmeterWidget>
+class AmmeterWidgetState extends State<AmmeterWidget>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _animation;
@@ -141,37 +143,37 @@ class _AmmeterWidgetState extends State<AmmeterWidget>
   }
 
   void _handlePanEnd(DragEndDetails details) {
-    final double _minAngle = minAngle;
-    final double _maxAngle = maxAngle;
-    double velocity = details.velocity.pixelsPerSecond.dx;
-    double targetTick = _currentTick;
+    // final double _minAngle = minAngle;
+    // final double _maxAngle = maxAngle;
+    // double velocity = details.velocity.pixelsPerSecond.dx;
+    // double targetTick = _currentTick;
 
-    if (velocity.abs() > 100) {
-      double direction = velocity.sign;
-      double targetAngle = _currentAngle + direction * (velocity.abs() / 1000);
-      targetAngle = targetAngle.clamp(_minAngle, _maxAngle);
-      targetTick = ((targetAngle - _minAngle) * _ticksPerPixel).roundToDouble();
-      targetTick = targetTick.clamp(0, _totalTicks);
-    }
+    // if (velocity.abs() > 100) {
+    //   double direction = velocity.sign;
+    //   double targetAngle = _currentAngle + direction * (velocity.abs() / 1000);
+    //   targetAngle = targetAngle.clamp(_minAngle, _maxAngle);
+    //   targetTick = ((targetAngle - _minAngle) * _ticksPerPixel).roundToDouble();
+    //   targetTick = targetTick.clamp(0, _totalTicks);
+    // }
 
-    _animation = Tween<double>(
-      begin: _currentTick,
-      end: targetTick,
-    ).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.decelerate,
-      ),
-    )..addListener(() {
-        setState(() {
-          _currentTick = _animation.value;
-          _currentAngle = _minAngle + (_currentTick / _ticksPerPixel);
-        });
-      });
+    // _animation = Tween<double>(
+    //   begin: _currentTick,
+    //   end: targetTick,
+    // ).animate(
+    //   CurvedAnimation(
+    //     parent: _animationController,
+    //     curve: Curves.decelerate,
+    //   ),
+    // )..addListener(() {
+    //     setState(() {
+    //       _currentTick = _animation.value;
+    //       _currentAngle = _minAngle + (_currentTick / _ticksPerPixel);
+    //     });
+    //   });
 
-    _animationController
-      ..reset()
-      ..forward();
+    // _animationController
+    //   ..reset()
+    //   ..forward();
   }
 
   Widget _buildAmmeterBackground(Size size) {
@@ -219,28 +221,40 @@ class _AmmeterWidgetState extends State<AmmeterWidget>
   }
 
    void movePointerToValue(double value) {
+    print("触发了");
+    print(value);
     final targetAngle = _calculateAngle(value);
     final targetTick = ((targetAngle - minAngle) * _ticksPerPixel).roundToDouble();
 
-    _animation = Tween<double>(
-      begin: _currentTick,
-      end: targetTick,
-    ).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.decelerate,
-      ),
-    )..addListener(() {
-        setState(() {
-          _currentTick = _animation.value;
-          _currentAngle = minAngle + (_currentTick / _ticksPerPixel);
-        });
-        widget.onValueChanged.call(value);
-      });
 
-    _animationController
-      ..reset()
-      ..forward();
+    if (_currentTick != targetTick) {
+      setState(() {
+        _currentTick = targetTick;
+        _currentAngle = targetAngle;
+        widget.onValueChanged.call(targetAngle);
+      });
+    }
+
+
+    // _animation = Tween<double>(
+    //   begin: _currentTick,
+    //   end: targetTick,
+    // ).animate(
+    //   CurvedAnimation(
+    //     parent: _animationController,
+    //     curve: Curves.decelerate,
+    //   ),
+    // )..addListener(() {
+    //     setState(() {
+    //       _currentTick = _animation.value;
+    //       _currentAngle = minAngle + (_currentTick / _ticksPerPixel);
+    //     });
+    //     widget.onValueChanged.call(value);
+    //   });
+
+    // _animationController
+    //   ..reset()
+    //   ..forward();
   }
 
   // Widget _buildCenterPoint(Size size) {
