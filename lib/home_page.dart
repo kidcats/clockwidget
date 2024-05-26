@@ -14,6 +14,9 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> with WindowListener {
   int _integerPart = 0;
   int _decimalPart = 0;
+      double _combinedNumber = 0;
+     final DigitalTubeInputController controller = DigitalTubeInputController();
+
 
   @override
   void initState() {
@@ -53,19 +56,15 @@ class _HomePageState extends State<HomePage> with WindowListener {
     final provider = Provider.of<CalculatorProvider>(context);
     final size = MediaQuery.of(context).size;
 
-    int combinedNumber = 0;
-     final DigitalTubeInputController controller = DigitalTubeInputController();
-
-
     void updateCombinedNumber(int number) {
       setState(() {
-        combinedNumber = number;
+        _combinedNumber = number / 10;
       });
     }
 
     void resetDigitalTubes() {
       setState(() {
-        combinedNumber = 0;
+        _combinedNumber = 0;
       });
     }
 
@@ -157,7 +156,7 @@ class _HomePageState extends State<HomePage> with WindowListener {
                         DigitalTubeInput(onNumberChanged: updateCombinedNumber,controller: controller,),
                         SizedBox(height: 20),
                         Text(
-                          'Combined Number: $combinedNumber',
+                          'Combined Number: $_combinedNumber',
                           style: TextStyle(fontSize: 24),
                         ),
                       ],

@@ -44,7 +44,7 @@ class DigitalTubeInputState extends State<DigitalTubeInput> {
   }
 
   void resetDigits() {
-    print("Resetting digits...");
+    // print("Resetting digits...");
     setState(() {
       _controllers.forEach((controller) => controller.text = '0');
     });
