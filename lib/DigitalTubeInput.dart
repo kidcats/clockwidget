@@ -75,12 +75,12 @@ class DigitalTubeInputState extends State<DigitalTubeInput> {
     if (value.isNotEmpty && index < _controllers.length - 1) {
       _focusNodes[index + 1].requestFocus();
     }
-    double _number = getCombinedNumber()/10;
+    int _number = getCombinedNumber();
     print(_number);
-    if(_number > 200){
+    if(_number > 2000){
        _showErrorDialog();
     }else{
-      widget.onNumberChanged(_number.toInt());
+      widget.onNumberChanged(_number);
     }
   }
 

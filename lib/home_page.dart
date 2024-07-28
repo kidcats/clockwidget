@@ -62,7 +62,7 @@ class _HomePageState extends State<HomePage> with WindowListener {
       setState(() {
         _combinedNumber = number / 10;
         _ammeterKey1.currentState?.movePointerToValue(_combinedNumber);
-        _ammeterKey2.currentState?.movePointerToValue(_combinedNumber);
+        _ammeterKey2.currentState?.movePointerToValue((_combinedNumber - _combinedNumber.truncate())*10);
       });
     }
 
