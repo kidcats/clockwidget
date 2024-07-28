@@ -33,25 +33,32 @@ class _HomePageState extends State<HomePage> with WindowListener {
   }
 
   void _updateIntegerPart(BuildContext context, double value) {
-    final provider = Provider.of<CalculatorProvider>(context, listen: false);
-    setState(() {
-      _integerPart = value.toInt();
-      if (_integerPart > 200) {
-        _integerPart = 200;
-      }
-      provider.updateXValue(_integerPart + _decimalPart / 10.0);
-    });
-  }
+  print("Updating integer part: $value");
+  final provider = Provider.of<CalculatorProvider>(context, listen: false);
+  setState(() {
+    _integerPart = value.toInt().clamp(0, 200);
+    _updateXValue(provider);
+  });
+}
 
-  void _updateDecimalPart(BuildContext context, double value) {
-    final provider = Provider.of<CalculatorProvider>(context, listen: false);
-    setState(() {
-      if (_integerPart < 200) {
-        _decimalPart = value.toInt();
-      }
-      provider.updateXValue(_integerPart + _decimalPart / 10.0);
-    });
-  }
+void _updateDecimalPart(BuildContext context, double value) {
+  print("Updating decimal part: $value");
+  final provider = Provider.of<CalculatorProvider>(context, listen: false);
+  setState(() {
+    if (_integerPart < 200) {
+      _decimalPart = value.toInt().clamp(0, 9);
+    } else {
+      _decimalPart = 0;
+    }
+    _updateXValue(provider);
+  });
+}
+
+void _updateXValue(CalculatorProvider provider) {
+  double xValue = _integerPart + _decimalPart / 10.0;
+  print("Updating X value to: $xValue");
+  provider.updateXValue(xValue);
+}
 
   @override
   Widget build(BuildContext context) {

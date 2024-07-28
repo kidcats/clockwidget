@@ -236,25 +236,25 @@ class AmmeterWidgetState extends State<AmmeterWidget>
     }
 
 
-    // _animation = Tween<double>(
-    //   begin: _currentTick,
-    //   end: targetTick,
-    // ).animate(
-    //   CurvedAnimation(
-    //     parent: _animationController,
-    //     curve: Curves.decelerate,
-    //   ),
-    // )..addListener(() {
-    //     setState(() {
-    //       _currentTick = _animation.value;
-    //       _currentAngle = minAngle + (_currentTick / _ticksPerPixel);
-    //     });
-    //     widget.onValueChanged.call(value);
-    //   });
+    _animation = Tween<double>(
+      begin: _currentTick,
+      end: targetTick,
+    ).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.decelerate,
+      ),
+    )..addListener(() {
+        setState(() {
+          _currentTick = _animation.value;
+          _currentAngle = minAngle + (_currentTick / _ticksPerPixel);
+        });
+        widget.onValueChanged.call(value);
+      });
 
-    // _animationController
-    //   ..reset()
-    //   ..forward();
+    _animationController
+      ..reset()
+      ..forward();
   }
 
   // Widget _buildCenterPoint(Size size) {
