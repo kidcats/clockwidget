@@ -75,8 +75,33 @@ class DigitalTubeInputState extends State<DigitalTubeInput> {
     if (value.isNotEmpty && index < _controllers.length - 1) {
       _focusNodes[index + 1].requestFocus();
     }
+    double _number = getCombinedNumber()/10;
+    print(_number);
+    if(_number > 200){
+       _showErrorDialog();
+    }else{
+      widget.onNumberChanged(_number.toInt());
+    }
+  }
 
-    widget.onNumberChanged(getCombinedNumber());
+   void _showErrorDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('数值过大'),
+          content: Text('输入的数值不能大于200，请重新输入。'),
+          actions: <Widget>[
+            TextButton(
+              child: Text('确定'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Widget _buildDigitalTube(int index) {
